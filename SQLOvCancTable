@@ -1,0 +1,79 @@
+-- Create the schema
+CREATE SCHEMA ovarian_cancer_proteins;
+
+-- Use the created schema
+USE ovarian_cancer_proteins;
+
+-- Create the Protein table
+CREATE TABLE Protein (
+    protein_id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(100) NOT NULL,
+    gene_symbol VARCHAR(20),
+    uniprot_id VARCHAR(10) UNIQUE,
+    molecular_weight DECIMAL(10, 2),
+    isoelectric_point DECIMAL(4, 2),
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Create the Cancer_Type table
+CREATE TABLE Cancer_Type (
+    cancer_type_id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(100) NOT NULL UNIQUE,
+    description TEXT
+);
+
+-- Create the Protein_Cancer_Association table
+CREATE TABLE Protein_Cancer_Association (
+    association_id INT PRIMARY KEY AUTO_INCREMENT,
+    protein_id INT NOT NULL,
+    cancer_type_id INT NOT NULL,
+    association_type ENUM('Upregulated', 'Downregulated', 'Mutated', 'Other') NOT NULL,
+    evidence_level ENUM('Strong', 'Moderate', 'Weak') NOT NULL,
+    pubmed_id VARCHAR(20),
+    FOREIGN KEY (protein_id) REFERENCES Protein(protein_id),
+    FOREIGN KEY (cancer_type_id) REFERENCES Cancer_Type(cancer_type_id)
+);
+
+-- Create the Pathway table
+CREATE TABLE Pathway (
+    pathway_id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(100) NOT NULL UNIQUE,
+    description TEXT
+);
+
+-- Create the Protein_Pathway table
+CREATE TABLE Protein_Pathway (
+    protein_id INT NOT NULL,
+    pathway_id INT NOT NULL,
+    PRIMARY KEY (protein_id, pathway_id),
+    FOREIGN KEY (protein_id) REFERENCES Protein(protein_id),
+    FOREIGN KEY (pathway_id) REFERENCES Pathway(pathway_id)
+);
+
+-- Create indexes for performance optimization
+CREATE INDEX idx_protein_name ON Protein(name);
+CREATE INDEX idx_protein_gene_symbol ON Protein(gene_symbol);
+CREATE INDEX idx_protein_cancer_association ON Protein_Cancer_Association(protein_id, cancer_type_id);
+CREATE INDEX idx_pathway_name ON Pathway(name);
+
+-- Insert some sample data
+INSERT INTO Cancer_Type (name, description) VALUES 
+('Ovarian Cancer', 'Cancer that begins in the ovaries');
+
+INSERT INTO Protein (name, gene_symbol, uniprot_id, molecular_weight, isoelectric_point, description) VALUES 
+('Tumor protein p53', 'TP53', 'P04637', 43653.00, 6.33, 'Acts as a tumor suppressor in many tumor types'),
+('Breast cancer type 1 susceptibility protein', 'BRCA1', 'P38398', 207721.68, 5.29, 'Plays a central role in DNA repair by facilitating cellular responses to DNA damage');
+
+INSERT INTO Protein_Cancer_Association (protein_id, cancer_type_id, association_type, evidence_level, pubmed_id) VALUES 
+(1, 1, 'Mutated', 'Strong', '25527629'),
+(2, 1, 'Mutated', 'Strong', '25527629');
+
+INSERT INTO Pathway (name, description) VALUES 
+('p53 signaling pathway', 'Regulates the cell cycle and can induce cell death'),
+('DNA damage response', 'Coordinates cell-cycle transitions, DNA replication, DNA repair and apoptosis');
+
+INSERT INTO Protein_Pathway (protein_id, pathway_id) VALUES 
+(1, 1),
+(2, 2);
